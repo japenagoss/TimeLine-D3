@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>D3</title>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+<body>
+    <svg></svg>
+  <script>
+    const margin = {
+      top: 18, right: 10, bottom: 10, left: 10,
+    };
+
+    function callData(callback){
+      d3.csv("Elderly_Abuse.csv").then(function(data) {
+        callback(data);
+      })
+    }
+
+    callData(function(data) {
+      var date = '';
+      var datesCounter = 0;
+
+      data.forEach(element => {
+        if (element.date !== date) {
+          date = element.date;
+          datesCounter++;
+        }
+      });
+
+      console.log(data);
+
+      let width = 400;
+      let height = datesCounter * 50;
+
+      const scale = d3.scaleTime()
+        .domain(d3.extent(data, (d) => { return formaDate(d.date); }))
+        .range([0, height]);
+
+      const y_axis = d3.axisLeft()
+        .scale(scale);
+
+      const svg = d3.select("svg")
+        .attr('width', width)
+        .attr('height', height)
+        .append('g');
+
+      svg.append("g")
+       .attr("transform", "translate(50, 10)")
+       .call(y_axis);
+
+      const simulation = d3.forceSimulation(data)
+        .force('x', d3.forceX(150))
+        .force('y', d3.forceY((d) => { return scale(formaDate(d.date)); }).strength(5))
+        .force('collide', d3.forceCollide(() => (20)))
+        .stop();
+
+      for (let i = 0; i < data.length; ++i) simulation.tick();
+
+      data.forEach((el) => {
+        svg.append('circle')
+          .attr('r', () => (7))
+          .attr('transform', 'translate(0,5)')
+          .attr('class', 'jitter-viz__dot')
+          .attr('cx', el.x)
+          .attr('cy', el.y);
+      });
+    });
+
+    function formaDate(date){
+      const splitedDate = date.split("/");
+      const finalDate = new Date(splitedDate[2],splitedDate[0]-1, splitedDate[1]);
+      // console.log(splitedDate);
+      // console.log(finalDate);
+      // console.log("-----------------------");
+      return finalDate;
+    }
+
+  </script>
+</body>
+</html>
