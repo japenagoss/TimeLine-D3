@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+<body>
+  <canvas width="960" height="960"></canvas>
+  <script>
+    const canvas = document.querySelector("canvas");
+    const context = canvas.getContext("2d");
+    const width = canvas.width;
+    const height = canvas.height;
+
+    function callData(callback){
+      d3.csv("Elderly_Abuse.csv").then(function(data) {
+        callback(data);
+      })
+    }
+
+    callData(function(data) {
+      const simulation = d3.forceSimulation(data)
+        .velocityDecay(0.2)
+        .force("x", d3.forceX().strength(0.002))
+        .force("y", d3.forceY().strength(0.002))
+        .force("collide", d3.forceCollide().radius(function(d) { return d.average + 0.5; }).iterations(2))
+        .on("tick", ticked);
+    });
+
+    function ticked() {
+      context.clearRect(0, 0, width, height);
+      context.save();
+      context.translate(width / 2, height / 2);
+
+      context.beginPath();
+      nodes.forEach(function(d) {
+        context.moveTo(d.x + d.r, d.y);
+        context.arc(d.x, d.y, d.r, 0, tau);
+      });
+      context.fillStyle = "#ddd";
+      context.fill();
+      context.strokeStyle = "#333";
+      context.stroke();
+
+      context.restore();
+    }
+
+  </script>
+</body>
+</html>
