@@ -31,16 +31,16 @@
         }
       });
 
-      let width = 400;
+      let width = 600;
       let height = datesCounter * 80;
 
-      const scale = d3.scaleTime()
+      const scaleY = d3.scaleTime()
         //.domain(d3.extent(data, (d) => { return formaDate(d.date); }))
-        .domain([new Date(2014, 0, 1), new Date(2018, 0, 1)])
+        .domain([new Date(2013, 0, 1), new Date(2018, 0, 1)])
         .range([0, height]);
 
       const y_axis = d3.axisLeft()
-        .scale(scale);
+        .scale(scaleY);
 
       const svg = d3.select("svg")
         .attr('width', width)
@@ -51,61 +51,42 @@
        .attr("transform", "translate(50, 10)")
        .call(y_axis);
       
+      const center = {x: width / 2, y: height / 2};
+      const forceStrength = 0.03;
+
+      const simulation = d3.forceSimulation(data)
+        .force('x', d3.forceX().x(function(d) {
+          return Math.floor((Math.random() * 300) + 1);;
+        }))
+        .force('y', d3.forceY((d) => { return scaleY(formaDate(d.date)); }))
+        .force('collision', d3.forceCollide().radius(function(d) {
+          return (d.coverage * 3) + 3
+        }))
+        .stop();
+
+      for (let i = 0; i < data.length; ++i) simulation.tick();
+
       const bubbles = svg
         .append("g")
+        .attr("transform", "translate(120, 0)")
         .selectAll("circle")
         .data(data)
         .enter().append("circle")
         .attr('class', d => `${giveColor(d.stage)} color`)
-        .attr('r', d => (d.coverage * 5))
+        .attr('r', d => (d.coverage * 3))
+        .attr('cx', d => d.x)
+        .attr('cy', d => d.y)
         .on("click", showPopup);
-
-      const center = {x: width / 2, y: height / 2};
-      const forceStrength = 0.03;
-
-      const simulation = d3.forceSimulation()
-        .velocityDecay(0.2)
-        .force('x', d3.forceX().strength(forceStrength).x(center.x))
-        //.force('y', d3.forceY().strength(forceStrength).y(center.y))
-        .force('y', d3.forceY((d) => { return scale(formaDate(d.date)); }).strength(forceStrength))
-        .force('charge', d3.forceManyBody().strength(charge))
-        .on('tick', ticked);
-
-      simulation.nodes(data);
-
+      
       function charge(d) {
         return - forceStrength * Math.pow(d.coverage * 5, 2.0);
       }
-
-      function ticked() {
-        bubbles
-          .attr('cx', function (d) { return d.x; })
-          .attr('cy', function (d) { return d.y; });
-      }
-
-
-      // const simulation = d3.forceSimulation(data)
-      //   .force('x', d3.forceX(120))
-      //   .force('y', d3.forceY((d) => { return scale(formaDate(d.date)); }).strength(5))
-      //   .force('collide', d3.forceCollide(() => (2)))
-      //   .stop();
-
-      // for (let i = 0; i < data.length; ++i) simulation.tick();
-
-      // data.forEach((el) => {
-      //   let ratio = el.coverage * 5;
-      //   svg.append('circle')
-      //     .attr('r', () => (ratio))
-      //     .attr('transform', 'translate(0,5)')
-      //     .attr('class', `${giveColor(el.stage)} color`)
-      //     .attr('cx', el.x)
-      //     .attr('cy', el.y);
-      // });
 
     });
 
     function showPopup(e){
       console.log(e.date);
+      console.log(e.coverage);
     }
 
     function formaDate(date){
